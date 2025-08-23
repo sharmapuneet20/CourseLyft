@@ -2,10 +2,11 @@
  const z = require ("zod");
 const bcrypt = require("bcrypt")
 const { Router }=  require("express");
-const {userModel } = require("../database/db");
+const {userModel, purchaseModel, courseModel } = require("../database/db");
 const { id } = require("zod/locales");
 const jwt = require("jsonwebtoken");
 const {JWT_USER_PASSWORD} = require("../config");
+const { userMiddleware } = require("../middlewares/user");
 
 
 
@@ -105,8 +106,19 @@ userRouter.post('/signin', async(req,res)=>{
 })
 
 
-userRouter.get('/purchases', async (req , res)=>{
+userRouter.get('/purchases', userMiddleware ,async (req , res)=>{
+   const userId = req.userId;
+  
+   const purchases = await purchaseModel.find({
+      userId,
+   })
 
+   const coursesdata = await courseModel.find({
+      _id: {$in: purchases.map(x => x.courseId) }
+   })
+   res.json({
+      purchases
+   })
 })
 
 module.exports = {
